@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: https://www.google-analytics.com https://www.googletagmanager.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://www.googletagmanager.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none';">
+<title>Blood Pressure Calculator</title>
+<meta name="description" content="Free blood pressure calculator. Enter your systolic and diastolic reading to see your category based on AHA guidelines, plus charts, FAQs, and what the numbers mean.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-P41HN02DDV"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-P41HN02DDV');
+</script>
+
+<style>
+  :root{
+    --paper:#FAF7F0; --paper-raised:#FFFFFF; --ink:#191918; --ink-hover:#37372F; --ink-soft:#585448;
+    --muted:#8A8577; --protein:#B23A2F; --carb:#C08A17; --fat:#5C6B2E; --fiber:#3A6B6B;
+    --danger:#B23A2F; --hair:#DEDACD;
+    --bp-low:#3A6B9E; --bp-normal:#3A6B6B; --bp-elevated:#C08A17; --bp-stage1:#D17A2E; --bp-stage2:#B23A2F; --bp-crisis:#7A1E1E;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--paper); color:var(--ink); font-family:'Inter',sans-serif; -webkit-font-smoothing:antialiased; }
+  #root{ max-width:660px; margin:0 auto; padding:0 18px 80px; }
+
+  .site-header{ position:sticky; top:0; z-index:100; background:var(--paper); border-bottom:1.5px solid var(--ink); margin-bottom:22px; padding:14px 0; }
+  .site-header-inner{ display:flex; align-items:center; justify-content:space-between; position:relative; }
+  .site-logo{ display:flex; align-items:center; gap:7px; font-family:'Archivo Black',sans-serif; font-size:14px; text-transform:uppercase; letter-spacing:-0.01em; color:var(--ink); text-decoration:none; white-space:nowrap; }
+  .site-logo .logo-dot{ width:8px; height:8px; border-radius:50%; background:var(--protein); flex-shrink:0; }
+  .current-page{ font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); display:none; }
+  .tools-dropdown{ position:relative; }
+  .tools-btn{ display:flex; align-items:center; gap:7px; font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.03em; background:var(--ink); color:var(--paper); border:1.5px solid var(--ink); padding:9px 14px; border-radius:3px; cursor:pointer; transition:background-color 0.15s ease; }
+  .tools-btn:hover{ background:#33332E; }
+  .tools-btn .chevron{ transition:transform 0.15s ease; flex-shrink:0; }
+  .tools-btn[aria-expanded="true"] .chevron{ transform:rotate(180deg); }
+  .tools-menu{ display:none; position:absolute; top:calc(100% + 10px); right:0; width:320px; max-width:calc(100vw - 36px); background:var(--paper-raised); border:1.5px solid var(--ink); box-shadow:0 10px 26px rgba(26,26,22,0.16); padding:8px; z-index:200; max-height:70vh; overflow-y:auto; }
+  .tools-menu.open{ display:block; }
+  .tools-menu-label{ font-family:'Space Mono',monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted); padding:8px 10px 4px; }
+  .tools-menu a{ display:block; padding:10px; border-radius:3px; text-decoration:none; color:var(--ink); border-bottom:1px solid var(--hair); }
+  .tools-menu a:last-child{ border-bottom:none; }
+  .tools-menu a:hover{ background:var(--paper); }
+  .tools-menu .tm-name{ font-weight:700; font-size:13px; margin-bottom:2px; }
+  .tools-menu .tm-desc{ font-size:11px; color:var(--ink-soft); line-height:1.45; }
+  @media (min-width:640px){ .current-page{ display:block; } }
+
+  .brand{ margin-bottom:22px; }
+  .brand h1{ font-family:'Archivo Black',sans-serif; font-size:22px; letter-spacing:-0.02em; margin:0; text-transform:uppercase; }
+  .brand .sub{ font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.04em; margin-top:6px; }
+
+  .card{ background:var(--paper-raised); border:1.5px solid var(--ink); padding:20px; margin-bottom:20px; }
+  .card h3{ font-family:'Space Mono',monospace; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; margin:0 0 14px; color:var(--ink-soft); }
+  .card h2.section-title{ font-family:'Archivo Black',sans-serif; font-size:17px; text-transform:uppercase; letter-spacing:-0.01em; margin:0 0 14px; }
+
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px; }
+  .field label{ display:block; font-size:11px; color:var(--muted); font-family:'Space Mono',monospace; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.03em; }
+  .field input{ width:100%; padding:10px; border:1.5px solid var(--hair); border-radius:2px; font-family:'Inter',sans-serif; font-size:14px; background:var(--paper); color:var(--ink); }
+  .field input:focus{ outline:2px solid var(--fat); outline-offset:1px; border-color:var(--fat); }
+
+  .calc-btn{ background:var(--ink); color:var(--paper); border:none; padding:13px 20px; font-family:'Space Mono',monospace; font-size:12.5px; text-transform:uppercase; letter-spacing:0.04em; cursor:pointer; border-radius:2px; width:100%; transition:background-color 0.2s ease; }
+  .calc-btn:hover{ background:var(--ink-hover); }
+
+  .result-card{ background:var(--paper-raised); border:3px solid var(--ink); padding:22px; display:none; margin-bottom:20px; }
+  .result-card.show{ display:block; }
+  .result-eyebrow{ font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:8px; }
+  .result-value{ font-family:'Archivo Black',sans-serif; font-size:26px; letter-spacing:-0.01em; margin-bottom:10px; padding:8px 14px; display:inline-block; border-radius:3px; }
+  .result-numbers{ font-family:'Space Mono',monospace; font-size:15px; color:var(--ink-soft); margin-bottom:18px; }
+  .result-desc{ font-size:13px; line-height:1.65; color:var(--ink-soft); margin-bottom:18px; }
+  .crisis-warning{ background:var(--bp-crisis); color:#fff; padding:12px 14px; border-radius:3px; font-size:13px; line-height:1.6; margin-bottom:18px; font-weight:600; display:none; }
+  .crisis-warning.show{ display:block; }
+
+  .scale-block{ margin-bottom:18px; }
+  .scale-label{ font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); margin-bottom:8px; }
+  .scale-track{ position:relative; height:22px; border-radius:4px; overflow:hidden; display:flex; border:1.5px solid var(--ink); }
+  .scale-track div.zone{ height:100%; }
+  .scale-marker{ position:absolute; top:-8px; width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid var(--ink); margin-left:-7px; }
+  .scale-marker-label{ position:absolute; top:16px; font-family:'Space Mono',monospace; font-weight:700; font-size:11px; transform:translateX(-50%); white-space:nowrap; }
+
+  .faq-item{ border-bottom:1px solid var(--hair); }
+  .faq-item:last-child{ border-bottom:none; }
+  .faq-q{ width:100%; text-align:left; background:none; border:none; padding:14px 0; font-weight:700; font-size:13.5px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; color:var(--ink); font-family:'Inter',sans-serif; }
+  .faq-q .faq-icon{ transition:transform 0.15s ease; flex-shrink:0; margin-left:10px; font-family:'Space Mono',monospace; }
+  .faq-q.open .faq-icon{ transform:rotate(45deg); }
+  .faq-a{ display:none; padding:0 0 14px; font-size:13px; line-height:1.65; color:var(--ink-soft); }
+  .faq-a.open{ display:block; }
+
+  .article-p{ font-size:14px; line-height:1.75; color:var(--ink-soft); margin:0 0 14px; }
+  .article-p:last-child{ margin-bottom:0; }
+  .article-p b{ color:var(--ink); }
+  .article-p a{ color:var(--fat); }
+
+  .bp-chart-table{ width:100%; border-collapse:collapse; font-size:12px; }
+  .bp-chart-table th{ font-family:'Space Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); text-align:left; padding:7px 5px; border-bottom:1.5px solid var(--ink); }
+  .bp-chart-table td{ padding:9px 5px; border-bottom:1px solid var(--hair); }
+  .bp-chart-table tr:last-child td{ border-bottom:none; }
+  .bp-chart-table .swatch-cell{ width:14px; }
+  .bp-swatch{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+  .medical-note{ background:#FBEAEA; border-left:3px solid var(--protein); padding:12px 14px; font-size:12.5px; line-height:1.6; color:var(--ink-soft); }
+  .medical-note b{ color:var(--ink); }
+
+  .explore-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .explore-card{ background:var(--paper-raised); border:1.5px solid var(--hair); padding:13px 14px; text-decoration:none; color:var(--ink); display:block; transition:border-color 0.15s ease, background-color 0.15s ease; }
+  .explore-card:hover{ border-color:var(--ink); background:var(--paper); }
+  .explore-card .ec-name{ font-weight:700; font-size:13.5px; margin-bottom:4px; }
+  .explore-card .ec-desc{ font-size:11.5px; color:var(--ink-soft); line-height:1.45; margin-bottom:8px; }
+  .explore-card .ec-arrow{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.03em; }
+  @media (max-width:520px){ .explore-grid{ grid-template-columns:1fr; } }
+
+  .disclaimer{ font-family:'Space Mono',monospace; font-size:10.5px; color:var(--muted); margin-top:18px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="root">
+
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="https://healthylifescale.com" class="site-logo"><span class="logo-dot"></span>Healthy Life Scale</a>
+      <span class="current-page">Blood Pressure</span>
+      <div class="tools-dropdown">
+        <button class="tools-btn" id="toolsBtn" aria-haspopup="true" aria-expanded="false">
+          Other Tools
+          <svg class="chevron" width="10" height="10" viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 3L5 7L9 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="tools-menu" id="toolsMenu">
+          <div class="tools-menu-label">Other tools</div>
+          <a href="https://healthylifescale.com"><div class="tm-name">Calorie Tracker</div><div class="tm-desc">Search 240+ foods and track daily calories, protein, carbs, fat, fiber, sugar & sodium.</div></a>
+          <a href="https://bmi.healthylifescale.com"><div class="tm-name">BMI Calculator</div><div class="tm-desc">Check your Body Mass Index and healthy weight range.</div></a>
+          <a href="https://water.healthylifescale.com"><div class="tm-name">Water Intake</div><div class="tm-desc">Get a daily hydration goal and log glasses as you drink.</div></a>
+          <a href="https://bmr.healthylifescale.com"><div class="tm-name">BMR / TDEE</div><div class="tm-desc">Find your daily calorie needs and a personalized macro split.</div></a>
+          <a href="https://sleep.healthylifescale.com"><div class="tm-name">Sleep Calculator</div><div class="tm-desc">Find your ideal bedtime or wake-up time by sleep cycle.</div></a>
+          <a href="https://pregnancyduedate.healthylifescale.com"><div class="tm-name">Pregnancy Due Date</div><div class="tm-desc">Estimate your due date and track gestational age week by week.</div></a>
+          <a href="https://pregnancyweightgain.healthylifescale.com"><div class="tm-name">Pregnancy Weight Gain</div><div class="tm-desc">See your recommended pregnancy weight gain range.</div></a>
+          <a href="https://period.healthylifescale.com"><div class="tm-name">Period Tracker</div><div class="tm-desc">Estimate your next period, ovulation day, and fertile window.</div></a>
+          <a href="https://height.healthylifescale.com"><div class="tm-name">Height Predictor</div><div class="tm-desc">Estimate a child's adult height from parents' heights.</div></a>
+          <a href="https://heartage.healthylifescale.com"><div class="tm-name">Heart Age Calculator</div><div class="tm-desc">See how lifestyle factors compare your heart age to your real age.</div></a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <script>
+  (function(){
+    var btn = document.getElementById('toolsBtn');
+    var menu = document.getElementById('toolsMenu');
+    if(!btn || !menu) return;
+    btn.addEventListener('click', function(e){
+      e.stopPropagation();
+      var isOpen = menu.classList.toggle('open');
+      btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+    document.addEventListener('click', function(e){
+      if(!menu.classList.contains('open')) return;
+      if(!menu.contains(e.target) && !btn.contains(e.target)){
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && menu.classList.contains('open')){
+        menu.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.focus();
+      }
+    });
+  })();
+  </script>
+
+  <div class="brand">
+    <h1>Blood Pressure Calculator</h1>
+    <div class="sub">check your reading against AHA blood pressure categories</div>
+  </div>
+
+  <div class="card">
+    <h3>Your reading</h3>
+    <div class="field-row">
+      <div class="field"><label for="systolic">Systolic (top number)</label><input type="number" id="systolic" placeholder="e.g. 118"></div>
+      <div class="field"><label for="diastolic">Diastolic (bottom number)</label><input type="number" id="diastolic" placeholder="e.g. 76"></div>
+    </div>
+    <button class="calc-btn" id="calcBtn">Check my reading</button>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <div class="result-eyebrow">Your Category</div>
+    <div class="result-value" id="categoryValue">&mdash;</div>
+    <div class="result-numbers" id="numbersLine"></div>
+    <div class="crisis-warning" id="crisisWarning">
+      A reading this high can signal a hypertensive crisis. If you also have chest pain, shortness of breath, severe headache, or vision changes, seek emergency care immediately. Otherwise, contact a doctor promptly to confirm the reading.
+    </div>
+    <div class="result-desc" id="resultDesc"></div>
+
+    <div class="scale-block">
+      <div class="scale-label">Systolic (top number)</div>
+      <div class="scale-track">
+        <div class="zone" style="background:var(--bp-low); flex:9;"></div>
+        <div class="zone" style="background:var(--bp-normal); flex:30;"></div>
+        <div class="zone" style="background:var(--bp-elevated); flex:10;"></div>
+        <div class="zone" style="background:var(--bp-stage1); flex:10;"></div>
+        <div class="zone" style="background:var(--bp-stage2); flex:40;"></div>
+        <div class="zone" style="background:var(--bp-crisis); flex:20;"></div>
+      </div>
+      <div style="position:relative;">
+        <div class="scale-marker" id="sysMarker" style="left:0%;"></div>
+        <div class="scale-marker-label" id="sysMarkerLabel" style="left:0%;"></div>
+      </div>
+    </div>
+
+    <div class="scale-block" style="margin-top:26px;">
+      <div class="scale-label">Diastolic (bottom number)</div>
+      <div class="scale-track">
+        <div class="zone" style="background:var(--bp-low); flex:10;"></div>
+        <div class="zone" style="background:var(--bp-normal); flex:20;"></div>
+        <div class="zone" style="background:var(--bp-stage1); flex:9;"></div>
+        <div class="zone" style="background:var(--bp-stage2); flex:31;"></div>
+        <div class="zone" style="background:var(--bp-crisis); flex:20;"></div>
+      </div>
+      <div style="position:relative;">
+        <div class="scale-marker" id="diaMarker" style="left:0%;"></div>
+        <div class="scale-marker-label" id="diaMarkerLabel" style="left:0%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">How this calculator works</h2>
+    <p class="article-p">Blood pressure is measured with two numbers: <b>systolic</b> (pressure when your heart beats) over <b>diastolic</b> (pressure when your heart rests between beats). This calculator compares both numbers against the <b>American Heart Association's</b> standard categories and reports whichever category your reading falls into &mdash; using the <i>higher</i> category if systolic and diastolic point to different ones, since that's the standard clinical convention.</p>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Blood pressure category chart</h2>
+    <table class="bp-chart-table">
+      <thead><tr><th></th><th>Category</th><th>Systolic</th><th></th><th>Diastolic</th></tr></thead>
+      <tbody>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-low);"></span></td><td>Low (Hypotension)</td><td>Below 90</td><td>or</td><td>Below 60</td></tr>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-normal);"></span></td><td>Normal</td><td>Below 120</td><td>and</td><td>Below 80</td></tr>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-elevated);"></span></td><td>Elevated</td><td>120&ndash;129</td><td>and</td><td>Below 80</td></tr>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-stage1);"></span></td><td>High BP &mdash; Stage 1</td><td>130&ndash;139</td><td>or</td><td>80&ndash;89</td></tr>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-stage2);"></span></td><td>High BP &mdash; Stage 2</td><td>140+</td><td>or</td><td>90+</td></tr>
+        <tr><td class="swatch-cell"><span class="bp-swatch" style="background:var(--bp-crisis);"></span></td><td>Hypertensive Crisis</td><td>Over 180</td><td>and/or</td><td>Over 120</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 class="section-title">Frequently asked questions</h2>
+    <div id="faqList">
+      <div class="faq-item">
+        <button class="faq-q">What is a normal blood pressure reading?<span class="faq-icon">+</span></button>
+        <div class="faq-a">A normal reading is below 120 systolic and below 80 diastolic, often written as "under 120/80." This reflects healthy blood flow with no added strain on your heart and arteries.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What's the difference between systolic and diastolic?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Systolic (the top number) measures pressure in your arteries when your heart contracts and pumps blood. Diastolic (the bottom number) measures pressure when your heart relaxes between beats. Both matter, but systolic tends to be a stronger predictor of cardiovascular risk after age 50.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">What causes high blood pressure?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Common contributors include excess sodium intake, being overweight, low physical activity, smoking, high alcohol use, chronic stress, certain medications, and genetics. In many cases, several factors combine rather than one single cause.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">Can blood pressure change throughout the day?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Yes, significantly. It's typically lowest during sleep, rises in the morning, and fluctuates with activity, stress, caffeine, and meals. A single reading is a snapshot, not the full picture &mdash; doctors often look at readings taken over several days.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">When should I seek emergency care?<span class="faq-icon">+</span></button>
+        <div class="faq-a">If your reading is over 180 systolic or over 120 diastolic, especially alongside chest pain, shortness of breath, severe headache, confusion, or vision changes, seek emergency care immediately &mdash; this can indicate a hypertensive crisis.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q">How can I lower my blood pressure naturally?<span class="faq-icon">+</span></button>
+        <div class="faq-a">Commonly recommended approaches include reducing sodium intake, maintaining a healthy weight, regular physical activity, limiting alcohol, managing stress, and not smoking. Any significant or sustained change in blood pressure should still be discussed with a doctor, especially before stopping or changing medication.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="medical-note">
+    <b>Not medical advice:</b> A single home reading can be affected by stress, posture, caffeine, or measurement technique. If you get a reading outside the normal range, take another reading after resting a few minutes, and talk to a doctor about a pattern of readings rather than one measurement alone.
+  </div>
+
+  <div class="card" style="margin-top:20px;">
+    <h3>Explore other tools</h3>
+    <div class="explore-grid">
+      <a href="https://healthylifescale.com" class="explore-card"><div class="ec-name">Calorie Tracker</div><div class="ec-desc">Search 240+ foods and track daily calories, protein, carbs, fat, fiber, sugar & sodium.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://bmi.healthylifescale.com" class="explore-card"><div class="ec-name">BMI Calculator</div><div class="ec-desc">Check your Body Mass Index and healthy weight range.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://water.healthylifescale.com" class="explore-card"><div class="ec-name">Water Intake</div><div class="ec-desc">Get a daily hydration goal and log glasses as you drink.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://bmr.healthylifescale.com" class="explore-card"><div class="ec-name">BMR / TDEE</div><div class="ec-desc">Find your daily calorie needs and a personalized macro split.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://sleep.healthylifescale.com" class="explore-card"><div class="ec-name">Sleep Calculator</div><div class="ec-desc">Find your ideal bedtime or wake-up time by sleep cycle.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://pregnancyduedate.healthylifescale.com" class="explore-card"><div class="ec-name">Pregnancy Due Date</div><div class="ec-desc">Estimate your due date and track gestational age week by week.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://pregnancyweightgain.healthylifescale.com" class="explore-card"><div class="ec-name">Pregnancy Weight Gain</div><div class="ec-desc">See your recommended pregnancy weight gain range.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://period.healthylifescale.com" class="explore-card"><div class="ec-name">Period Tracker</div><div class="ec-desc">Estimate your next period, ovulation day, and fertile window.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://height.healthylifescale.com" class="explore-card"><div class="ec-name">Height Predictor</div><div class="ec-desc">Estimate a child's adult height from parents' heights.</div><div class="ec-arrow">Open &rarr;</div></a>
+      <a href="https://heartage.healthylifescale.com" class="explore-card"><div class="ec-name">Heart Age Calculator</div><div class="ec-desc">See how lifestyle factors compare your heart age to your real age.</div><div class="ec-arrow">Open &rarr;</div></a>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    Categories follow American Heart Association guidelines. This tool is educational and not a substitute for professional medical measurement or advice.
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const answer = btn.nextElementSibling;
+      const isOpen = answer.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      btn.querySelector('.faq-icon').textContent = isOpen ? '\u2212' : '+';
+    });
+  });
+
+  function classify(sys, dia){
+    if(sys > 180 || dia > 120) return {cat:'crisis', label:'Hypertensive Crisis', color:'var(--bp-crisis)', textColor:'#fff',
+      desc:'Both numbers are in a range considered a hypertensive crisis. This needs prompt medical attention \u2014 see the warning above.'};
+    if(sys < 90 || dia < 60) return {cat:'low', label:'Low Blood Pressure', color:'var(--bp-low)', textColor:'#fff',
+      desc:'Your reading is below the typical range. Low blood pressure isn\u2019t always a problem, but if you feel dizzy, faint, or unusually tired, mention it to a doctor.'};
+    if(sys < 120 && dia < 80) return {cat:'normal', label:'Normal', color:'var(--bp-normal)', textColor:'#fff',
+      desc:'Your reading falls in the normal range \u2014 keep up whatever habits are working for you.'};
+    if(sys >= 120 && sys <= 129 && dia < 80) return {cat:'elevated', label:'Elevated', color:'var(--bp-elevated)', textColor:'#fff',
+      desc:'Your systolic number is a bit above normal. This is a good point to focus on lifestyle habits \u2014 diet, activity, sodium \u2014 before it progresses further.'};
+    if((sys >= 130 && sys <= 139) || (dia >= 80 && dia <= 89)) return {cat:'stage1', label:'High Blood Pressure \u2014 Stage 1', color:'var(--bp-stage1)', textColor:'#fff',
+      desc:'This is the first stage of high blood pressure (hypertension). Doctors often recommend lifestyle changes first, sometimes alongside medication depending on your overall risk.'};
+    return {cat:'stage2', label:'High Blood Pressure \u2014 Stage 2', color:'var(--bp-stage2)', textColor:'#fff',
+      desc:'This is a more significant stage of high blood pressure. It\u2019s worth discussing treatment options, including medication, with a doctor.'};
+  }
+
+  $('calcBtn').addEventListener('click', ()=>{
+    const sys = parseInt($('systolic').value);
+    const dia = parseInt($('diastolic').value);
+    if(!sys || !dia){ alert('Please enter both your systolic and diastolic numbers.'); return; }
+
+    const result = classify(sys, dia);
+    $('categoryValue').textContent = result.label;
+    $('categoryValue').style.background = result.color;
+    $('categoryValue').style.color = result.textColor;
+    $('numbersLine').textContent = sys + ' / ' + dia + ' mmHg';
+    $('resultDesc').textContent = result.desc;
+    $('crisisWarning').classList.toggle('show', result.cat === 'crisis');
+
+    // Systolic scale: 70 to 200
+    const sysPct = Math.min(100, Math.max(0, ((sys-70)/(200-70))*100));
+    $('sysMarker').style.left = sysPct+'%';
+    $('sysMarkerLabel').style.left = sysPct+'%';
+    $('sysMarkerLabel').textContent = sys;
+
+    // Diastolic scale: 40 to 130
+    const diaPct = Math.min(100, Math.max(0, ((dia-40)/(130-40))*100));
+    $('diaMarker').style.left = diaPct+'%';
+    $('diaMarkerLabel').style.left = diaPct+'%';
+    $('diaMarkerLabel').textContent = dia;
+
+    $('resultCard').classList.add('show');
+  });
+})();
+</script>
+</body>
+</html>
